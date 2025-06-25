@@ -48,7 +48,7 @@ def run_piper(piper_dir, SCHRODINGER, args = None):
 
     #Parsing and checking the arguments
     if args is None: 
-        args = piper_parseargs.parse_args()
+        args = piper_parseargs.parse_and_check_args()
     
     #Getting default settings
     default = piper_default.main(PIPER_path)

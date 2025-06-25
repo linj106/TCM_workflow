@@ -1,0 +1,16 @@
+### CONSTRAINTS TXT FILE EXAMPLE ###
+## ALL RESIDUES SHOULD BE IDENTIFIED BY 3 LETTER AA CODE FOLLOWED BY RESIDUE NUM (e.g. HIS375) ##
+
+# EXAMPLE DISTANCE CONSTRAINT
+# STRUCTURE: {type of constraint (distance)} {dmin (float)} {dmax (float)} {REC RESIDUE} {LIG RESIDUE}
+# EX: distance 2.0 5.0 HIS354 LYS672 
+
+# EXAMPLE ATTRACTION CONSTRAINT
+# STRUCTURE: {type of constraint (attraction)} {attraction bonus (decimal between 0.11 and 0.99)} {protein involved - 'receptor' or 'ligand'} {RESIDUES involved (separated by space)}
+# EX: attraction 0.11 receptor HIS354 LYS672 GLY354 HIS765
+
+# EXAMPLE REPULSION CONSTRAINT
+# STRUCTURE: {type of constraint (repulsion)} {protein involved - 'receptor' or 'ligand'} {RESIDUES involved (separated by space)}
+# EX: repulsion receptor HIS354 LYS672 GLY354 HIS765
+
+
