@@ -140,6 +140,81 @@ def build_distance_constraint(distance_pairs_list):
 
     return distance_constraint
 
+def parse_constraint_file(constraint_file):
+    """ Builds dictionary representation by reading through constraint file
+    
+    Input:
+    - constraint_file: path to .txt file that contains constraints
+     
+    Return:
+    - dictionary rep of constraints """
+    all_constraints = []
+    distance_pair_list = []
+
+    with open(constraint_file, 'r') as f:
+        for line_number, line in enumerate(f, start=1):
+            split_line = line.strip().split()
+
+            # if distance constraint, add info to distance_pair
+            if split_line[0] == "distance":
+                dmin = float(split_line[1])
+                dmax = float(split_line[2])
+                receptor_residue = split_line[3]
+                ligand_residue = split_line[4]
+
+                # splitting residue info into res num and res type
+                # e.g. 'HIS238' -> 'HIS', '238'
+                receptor_residue_type = receptor_residue[:3]
+                receptor_residue_num = int(receptor_residue[3:])
+
+                ligand_residue_type = ligand_residue[:3]
+                ligand_residue_num = int(ligand_residue[3:])
+
+                # appending distance pair
+                distance_pair = (receptor_residue_num, receptor_residue_type, ligand_residue_num, ligand_residue_type, dmin, dmax)
+                distance_pair_list.append(distance_pair)
+            
+            # if attraction constraint
+            elif split_line[0] == "attraction":
+                bonus = round(float(split_line[1]), 2)
+                protein_type = split_line[2]
+                selected_residues = [(int(residue[3:]), residue[:3]) for residue in split_line[3:]] # iterating through remaining list and processing residue
+                all_constraints.append(build_attraction_constraint(selected_residues, protein_type, bonus)) # build attraction constraint dict and add
+            
+            # if repulsion constraint
+            elif split_line[0] == "repulsion":
+                protein_type = split_line[1]
+                selected_residues = [(int(residue[3:]), residue[:3]) for residue in split_line[2:]] # iterating through remaining list and processing residue
+                all_constraints.append(build_repulsion_constraint(selected_residues, protein_type)) # build repulsion constraint dict and add
+
+            # else is comment and ignore
+            else:
+                continue
+            
+    # build distance constraint and add
+    all_constraints.append(build_distance_constraint(distance_pair_list))
+    
+
+def main(args, path_to_dir):
+    """ Writes constraints list from args and saves to constraints.json file in path_to_dir. Modifies 
+    args to delete parsed files arguments and replace with proper argument to correct constraints_file. 
+    
+    Returns:
+    - new args with constraint_file argument """
+
+    # builds and writes constraints file 
+    constraints_list = parse_constraint_file(args.constraint)
+    write_constraint_json(constraints_list, path_to_dir)
+    
+    # deletes the constraints file from args
+    args.constraint = None
+
+    # adding new argument with path to constraint file
+    args.constraints_file = os.path.join(path_to_dir, "constraints.json")
+    
+    return args
+
+# DEPRECATED
 def parse_distance_constraint_file(distance_constraint_file):
     """ Builds dictionary representation by reading through distance constraint file.
     
@@ -256,24 +331,3 @@ def build_constraints(args):
             all_constraints.append(parse_repulsion_file(file))
 
     return all_constraints
-
-def main(args, path_to_dir):
-    """ Writes constraints list from args and saves to constraints.json file in path_to_dir. Modifies 
-    args to delete parsed files arguments and replace with proper argument to correct constraints_file. 
-    
-    Returns:
-    - new args with constraint_file argument """
-
-    # builds and writes constraints file 
-    constraints_list = build_constraints(args)
-    write_constraint_json(constraints_list, path_to_dir)\
-    
-    # deletes the constraints file from args
-    args.distance_constraint = None
-    args.attraction = None
-    args.repulsion = None
-
-    # adding new argument with path to constraint file
-    args.constraints_file = os.path.join(path_to_dir, "constraints.json")
-    
-    return args
