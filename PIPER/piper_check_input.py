@@ -122,6 +122,7 @@ def invalid_protein_error(protein_file, chain):
     return False 
 
 # checking the constraints .txt file inputs
+
 def regex_mismatch(pattern, input):
     """ Given a specific regex pattern and input to check, checks whether a regex_mismatch_error occurs.
     
@@ -135,50 +136,209 @@ def regex_mismatch(pattern, input):
         return True 
     else:
         return False
+
+def residue_error(residue_info, protein_type, args):
+    """ Checks that the residue is the correct pattern (e.g. HIS375) and checks that the residue exists within the protein file (including part of the specific 
+    chain if parsed as argument).
     
-# def residue_not_found_error(residues_list):
-
-# def check_distance_constraints(distance_constraint_file):
-#     """ Checks distance constraints file and makes sure it follows basic format. 
+    Input:
+    - residue_info: str representing residue (AAA37)
+    - protein_type: type of protein (either receptor or ligand)
+    - args: user parsed arguments
     
-#     Input:
-#     - distance_constraint_file: .txt file with distance constraint information
+    Return: True (if error), False (if no error)""" \
+    # checking regex pattern of residue_info (3 letters followed by res num)
+    if regex_mismatch('^[A-Za-z]{3}\d+$', residue_info):
+        logger.critical('Residue information incorrect; must be three letter AA code followed by residue number')
+        return True 
     
-#     Return: True or False """
+    if protein_type == 'receptor':
+        protein_file = args.receptor_prot
+        protein_chain = args.receptor_chain
 
-#     # building regex with specific required pattern of single distance_constraint file 
+    elif protein_type == 'ligand':
+        protein_file = args.ligand_prot
+        protein_chain = args.receptor_chain
 
-#     residue_regex = r'^[A-Z]{3}\d+$' # requires three capital letters (residue type) followed at least one digit (residue num) 
-#     distance_regex = r'^(?:0|0?\.\d+|[1-9]\d*(?:\.\d*)?)$' # requires a non-negative number for distance 
+    else:
+        raise AssertionError, "protein type can only be receptor or ligand"
+    
+    for st in StructureReader(protein_file):
+        for chain in st.chain:
+            for residue in chain.residue:
+                if (residue.pdbres == int(residue_info[:3])) and (residue.resnum == residue_info[3:]):
+                    if (protein_chain is None) or (chain == protein_chain):
+                        return False # residue correctly found
+    
+    return True # residue not found 
+                
+def distance_constraint_error(line_num, args, constraint_line_split):
+    """ Checks line in constraint file input if it starts with distance. Makes sure that it follows the format:
+    "distance" | dmin (float) | dmax (float) | REC_RESIDUE (e.g. "HIS375") | LIG_RESIDUE (e.g. "HIS375")
+    
+    Input:
+    - line_num: line number in txt file
+    - args: user-parsed arguments
+    - constraint_line_split: split line of constraint file as list (result of file.readline().split())
+    
+    Return: boolean (True if error, False if no error)"""
 
-#     # iterating and checking through constraint file 
-#     with open(distance_constraint_file, 'r') as file: 
-#         for constraint in file: # iterating through lines (each one a separate distance constraint)
-#             constraint = constraint.strip()
-#             information = constraint.split() 
-            
-#             # checking that each line has exactly 4 arguments separated by space
-#             if len(information) != 4:
-#                 logger.critical(f'Check distance constraints txt file; each line must have 4 inputs separated by space')
-#                 return True 
+    # check dmin and dmax are floats
+    try: 
+        dmin = float(constraint_line_split[1])
+        dmax = float(constraint_line_split[2])
+    except ValueError:
+        logger.critical(f'Check the distance constraint in line {line_num}. dmin and dmax must be floats')
+        return True 
+    
+    # check that the correct number of arguments exist
+    if len(constraint_line_split) != 5:
+        logger.critical(f'Check the distance constraint in line {line_num}. Must have exactly five arguments per line.')
+        return True
 
-#             # defining specific info from line 
-#             receptor_residue = information[0]
-#             ligand_residue = information[1]
-#             dmin = information[2]
-#             dmax = information[3]
-            
-#             # match regex for residues
-#             if regex_mismatch(residue_regex, receptor_residue) or regex_mismatch(residue_regex, ligand_residue):
-#                 logger.critical(f'Check distance constrants txt file; residues are represented by capital 3 letter amino acid code followed by residue number (e.g. HIS375)')
-#                 return True
-            
-#             # match regex for distances
-#             if regex_mismatch(distance_regex, dmin) or regex_mismatch(distance_regex, dmax):
-#                 logger.critical(f'Check distanct constraints txt file; dmin and dmax must be non-negative valid numbers')
+    # check the receptor residue input
+    protein_file = args.receptor_prot
+    if residue_error(constraint_line_split[3], protein_file, args):
+        logger.critical(f'Check the distance constraint in line {line_num}. Receptor residue does not exist in receptor protein + chain')
+        return True
+    
+    # check the ligand residue input
+    protein_file = args.ligand_prot
+    if residue_error(constraint_line_split[4], protein_file, args):
+        logger.critical(f'Check the distance constraint in line {line_num}. Ligand residue does not exist in ligand protein + chain')
+        return True
+    
+    return False
 
+def attraction_constraint_error(line_num, args, constraint_line_split):
+    """ Checks line in constraint file input if it starts with attraction. Makes sure that it follows the format:
+    "attraction" | attraction_bonus (float btw 0.11 and 0.99) | protein_type (either "receptor" or "ligand") | Residues Involved (separated by space)
+    
+    Input:
+    - line_num: line number in file
+    - args: user-parsed arguments
+    - constraint_line_split: split line of constraint file as list (result of file.readline().split())
+    
+    Return: boolean (True if error, False if no error)"""
+
+    # check attraction bonus float btw 0.11 and 0.99
+    try: 
+        bonus = float(constraint_line_split[1])
+        assert (bonus >= 0.11 and bonus <= 0.99)
+    except ValueError:
+        logger.critical(f'Check the attraction constraint in line {line_num}. bonus must be a float')
+        return True 
+    except AssertionError:
+        logger.critical(f'Check the attraction consrtraint in line {line_num}. bonus must be between 0.11 and 0.99')
+
+    # check that the correct number of arguments exist
+    if len(constraint_line_split) < 4:
+        logger.critical(f'Check the attraction constraint in line {line_num}. Must have at least 4 arguments.')
+        return True
+    
+    protein_type = constraint_line_split[2]
+    
+    # check the residues inputs if receptor protein 
+    if protein_type == 'receptor':
+        protein_file = args.receptor_prot
+        for residue in constraint_line_split[3:]:
+            if residue_error(residue, protein_file, args):
+                logger.critical(f'Check the attraction constraint in line {line_num}. Residue {residue} does not exist in receptor protein + chain')
+                return True
+    
+    # check the ligand residue input
+    elif protein_type == 'ligand':
+        protein_file = args.ligand_prot
+        for residue in constraint_line_split[3:]:
+            if residue_error(constraint_line_split[4], protein_file, args):
+                logger.critical(f'Check the attraction constraint in line {line_num}. Residue {residue} does not exist in ligand protein + chain')
+                return True
+    
+    # otherwise invalid protein_type
+    else:
+        logger.critical(f'Check the attraction constraint in line {line_num}. Protein type must be receptor or ligand')
+        return True
+    
+    return False
+
+def repulsion_constraint_error(line_num, args, constraint_line_split):
+    """ Checks line in constraint file input if it starts with repulsion. Makes sure that it follows the format:
+    "repulsion" | protein_type (either "receptor" or "ligand") | Residues Involved (separated by space)
+    
+    Input:
+    - line_num: line number in txt file 
+    - args: user-parsed arguments
+    - constraint_line_split: split line of constraint file as list (result of file.readline().split())
+    
+    Return: boolean (True if error, False if no error)"""
+
+    # check that the correct number of arguments exist
+    if len(constraint_line_split) < 3:
+        logger.critical(f'Check the repulsion constraint in line {line_num}. Must have at least 3 arguments.')
+        return True
+    
+    protein_type = constraint_line_split[1]
+    
+    # check the residues inputs if receptor protein 
+    if protein_type == 'receptor':
+        protein_file = args.receptor_prot
+        for residue in constraint_line_split[2:]:
+            if residue_error(residue, protein_file, args):
+                logger.critical(f'Check the repulsion constraint in line {line_num}. Residue {residue} does not exist in receptor protein + chain')
+                return True
+    
+    # check the ligand residue input
+    elif protein_type == 'ligand':
+        protein_file = args.ligand_prot
+        for residue in constraint_line_split[2:]:
+            if residue_error(constraint_line_split[4], protein_file, args):
+                logger.critical(f'Check the repulsion constraint in line {line_num}. Residue {residue} does not exist in ligand protein + chain')
+                return True
+    
+    # otherwise invalid protein_type
+    else:
+        logger.critical(f'Check the repulsion constraint in line {line_num}. Protein type must be receptor or ligand')
+        return True
+    
+    return False
+
+def invalid_constraints_error(args, input_constraints_txt):
+    """ Checks whether the input constraints txt file is valid by performing the specific checks above per line. 
+    
+    Input:
+    - args: user-parsed arguments
+    - input_constraints_txt: file path to constraints txt file
+    
+    Return: boolean (True if error, False if no error) """
+
+    # iterating through lines 
+    with open(input_constraints_txt, 'r') as f:
+        for line_num, line in enumerate(f, start = 1):
+            line_stripped = line.strip()
+
+            # if line starts with distance, check against distance
+            if line_stripped[0] == 'distance':
+                if distance_constraint_error(line_num, args, line_stripped.split()):
+                    return True
             
+            # if line starts with attraction, check against attraction
+            elif line_stripped[0] == 'attraction':
+                if attraction_constraint_error(line_num, args, line_stripped.split()):
+                    return True
             
+            # if line starts with repulsion, check against repulsion
+            elif line_stripped[0] == 'repulsion':
+                if repulsion_constraint_error(line_num, args, line_stripped.split()):
+                    return True
+
+            # else check if comment
+            elif line_stripped.startswith('#'):
+                continue
+
+            # finally invalid line
+            else:
+                logger.critical('Line {line_num} is invalid; must be comment or start with [distance, attraction, repulsion]')
+                return True 
 
 def check_args(parser, system_arg, args, unknowns):
     """ Given the result of parsing user arguments, checks whether the arguments 
@@ -212,4 +372,9 @@ def check_args(parser, system_arg, args, unknowns):
         logger.critical('Ligand protein failed checks. See above for more detail.')
         return True 
     
+    # check constraints
+    if invalid_constraints_error(args, args.constraint):
+        logger.critical('Constraints file is invalid. See above for more details.')
+        return True 
+
     return False 
