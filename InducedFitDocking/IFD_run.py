@@ -114,7 +114,7 @@ def ifd(args, params, SCHRODINGER):
     
     # writing input file
     input_file_path = IFD_write_input_file.main(input_protein_file, ligand_binding_site, input_ligand_file, h_bond_constraints)
-    input_file_path = input_file_path.split('/')[-1]
+    input_file_path = input_file_path.split('/')[-1] # CANNOT HAVE PATH FOR INPUT FILE ONLY THE ACTUAL FILE NAME IN CWD
     # building command
     params_cmd = build_params_command(params)
     print(params_cmd)
