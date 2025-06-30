@@ -72,11 +72,10 @@ def protein_diagnostics_error(protein_file_path):
 
     for st in structures: # iterating through the protein file
         problems = get_problems(st) # getting problems
-
         valences = problems.invalid_types # checking valence error and raising error if not empty list
         if valences:
             logger.critical('Protein not correctly prepared, issues with valence identified.')
-            error = True 
+            error = True
 
         missing = problems.missing # checking missing atom error and raising error if not empty list 
         if missing:
@@ -368,9 +367,10 @@ def check_parsed_args(parser, system_arg, args, unknowns):
         return True 
     
     # check constraints
-    if invalid_constraints_error(args, args.constraint):
-        logger.critical('Constraints file is invalid. See above for more details.')
-        return True 
+    if args.constraint is not None:
+        if invalid_constraints_error(args, args.constraint):
+            logger.critical('Constraints file is invalid. See above for more details.')
+            return True 
 
     return False 
 
