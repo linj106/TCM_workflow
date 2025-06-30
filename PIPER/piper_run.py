@@ -52,7 +52,7 @@ def build_params_command(params):
         #special handling for host information to add OMPI after host 
         elif isinstance(v, str):
             if k == 'HOST':
-                cmd.append(f'-{k} {v}:{params['OMPI'] if 'OMPI' in params else 10}')
+                cmd.append(f"-{k} {v}:{params['OMPI'] if 'OMPI' in params else 10}")
             else:
                 cmd.append(f'-{k} {v}')
     
