@@ -100,7 +100,6 @@ def set_up(jobname = 'prot_prot_docking'):
     fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')) #Create writing format for logging
     logger.addHandler(fh) #adding handler 
     logger.setLevel(logging.DEBUG) #Set logger default to debug (all warning lvls allowed)
-    logger.info(f'PIPER started. Results and info can be found in {piper_dir}')
 
     return master_dir, piper_dir, SCHRODINGER
 
