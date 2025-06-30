@@ -30,9 +30,13 @@ def update_default_w_args(default, args):
 
     # delete input files from parameters; only want to display PIPER settings
     del default['receptor_prot']
-    del default['receptor_chain']
     del default['ligand_prot']
-    del default['ligand_chain']
+
+    # ligand and receptor_chain might not be parsed but delete if they are
+    if 'ligand_chain' in default:
+        del default['ligand_chain']
+    if 'receptor_chain' in default:
+        del default['receptor_chain']
 
     return default 
 
@@ -60,7 +64,7 @@ def run_piper(piper_dir, SCHRODINGER, piper_args = None):
         args = piper_constraints.main(args, piper_dir)
 
     #Getting default settings (from user if argument passed in)
-    institutional_path = None
+    institutional_path = 'None'
     user_defined_path = None if args.default is None else os.path.join(os.getcwd(), args.default)
     default = piper_default.main(PIPER_path, institutional_path, user_defined_path)
 
