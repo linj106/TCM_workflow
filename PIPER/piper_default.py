@@ -21,14 +21,14 @@ def read_user_json(user_input_json):
 
     return parameters
 
-def read_institution_json(PIPER_path):
+def read_institution_json(institutional_parameters):
     """ Reads in json file in PPW path that contains the default parameters for PIPER job.
     
-    Input: path to institution directory or other directory that contains a default_parameters.json file to read
+    Input: institutional_parameters - default_parameters.json file to read for PIPER job
     Returns: Python dictionary containing the parameters of PIPER path 
     """
     #Open institution-based parameters json file for reading
-    with open(os.path.join(PIPER_path, "default_parameters.json"), "r") as injson:
+    with open(institutional_parameters, "r") as injson:
         #Put parameters in a list
         parameters = json.load(injson)
 
@@ -52,11 +52,15 @@ def write_default_PIPER(user_dir_path):
     #Getting parameters dictionary
     parameters = {
     'poses': 30,
-    'rotations': 7000,
-    'raw': True,
-    'OMPI': 40,
+    'rotations': 70000,
+    'refinement_protocol':'None',
+    'raw': False,
+    'OMPI': 10,
     'JOBID': True,
-    'use_nonstandard_residue': 'y'
+    'use_nonstandard_residue': 'yes',
+    'HOST': 'js-hopi-sge-xl-rhel8:10',
+    'TMPLAUNCHDIR': True,
+    'DEBUG': False
     }
 
     #Convert dictionary to json object
@@ -78,22 +82,25 @@ def get_default_PIPER():
     # defines default parameters for PIPER job
     parameters = {
     'poses': 30,
-    'rotations': 7000,
-    'raw': True,
-    'OMPI': 2,
+    'rotations': 70000,
+    'refinement_protocol':'None',
+    'raw': False,
+    'OMPI': 10,
     'JOBID': True,
-    'use_nonstandard_residue': 'y',
-    'HOST': 'js-hopi-sge-l-rhel8',
-    'TMPLAUNCHDIR': True
+    'use_nonstandard_residue': 'yes',
+    'HOST': 'js-hopi-sge-xl-rhel8:10',
+    'TMPLAUNCHDIR': True,
+    'DEBUG': False
     }
 
     return parameters
 
-def main(PIPER_path, user_json_path = None):
+def main(PIPER_module_path, PIPER_default_path, user_json_path = None):
     """ Retrieves the correct default settings based on user inputs. 
     
     Input:
-    - PIPER_path: path to location of PIPER module with Python scripts and default institutional arguments 
+    - PIPER_module_path: path to PIPER
+    - PIPER_default_path: path to location of default PIPER json
     - user_json_path: path to user's custom json file to use (optional)
     Output: dict with correct PIPER default arguments """
 
@@ -103,11 +110,10 @@ def main(PIPER_path, user_json_path = None):
 
     # otherwise tries to read in institutional arguments
     try:
-        parameters = read_institution_json(PIPER_path)
+        return read_institution_json(PIPER_default_path)
     
     # if institutional file not found, then gets default arguments defined in script 
     except FileNotFoundError:
-        logger.warning(f'Institutional json file not found. Reading in default arguments from {PIPER_path}/piper_default.py.')
-        parameters = get_default_PIPER()
+        logger.warning(f'Institutional json file not found. Reading in default arguments from {PIPER_module_path}/piper_default.py.')
     
-    return parameters
+    return get_default_PIPER()
