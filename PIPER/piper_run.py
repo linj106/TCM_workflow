@@ -39,6 +39,9 @@ def build_params_command(params):
         if v is True:
             cmd.append(f'-{k}')
 
+        elif v is False:
+            continue
+
         #int converts to flag of key with int value as following argument
         #e.g. 'poses':30 goes to '-poses 30' in cmd
         elif isinstance(v, int):
@@ -46,10 +49,10 @@ def build_params_command(params):
 
         #str converts to flag of key with str value as following argument
         #e.g. 'ligand_chain': 'A' goes to '-ligand_chain A' in cmd
-        #special handling for host information
+        #special handling for host information to add OMPI after host 
         elif isinstance(v, str):
             if k == 'HOST':
-                cmd.append(f'-{k} {v}:40')
+                cmd.append(f'-{k} {v}:{params['OMPI'] if 'OMPI' in params else 10}')
             else:
                 cmd.append(f'-{k} {v}')
     
@@ -70,7 +73,7 @@ def get_inputs(args):
 
     return [f'-receptor {rec}', f'-receptor_chain {rec_chain}', f'-ligand {lig}', f'-ligand_chain {lig_chain}']
 
-def piper(args, params, SCHRODINGER):
+def piper(args, params, SCHRODINGER, piper_dir):
     """ Runs piper job.
     
     Input:
@@ -88,14 +91,16 @@ def piper(args, params, SCHRODINGER):
     params_cmd = build_params_command(params)
 
     #job name
-    job_name = [f'-jobname PIPER_job']
+    job_name = [f'-jobname {args.jobname}' if args.jobname is not None else f'-jobname prot_prot_docking']
 
     #combine cmd
     command = run_cmd + job_name + input + params_cmd
 
     #log the cmd
-    logger.info("Running PIPER: %s"%' '.join(command))
+    logger.info("Running PIPER protein-protein docking: %s"%' '.join(command))
 
+    # enter into piper_dir (to store results there) and run 
+    os.chdir(piper_dir)
     run_job(command)
 
 

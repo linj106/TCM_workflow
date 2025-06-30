@@ -1,16 +1,12 @@
-#Import Python modules
+## Import Python modules
 import logging
-import textwrap
-import argparse
-import sys
-import os
 import re
 
-#Import Schrodinger modules 
+## Import Schrodinger modules 
 from schrodinger.structure import StructureReader, StructureWriter
 from schrodinger.application.prepwizard2.diagnostics import get_problems
 
-###Initiate logger###
+### Initiate logger ###
 logger = logging.getLogger(__name__)
 
 # checking protein file inputs
@@ -106,7 +102,6 @@ def invalid_protein_error(protein_file, chain):
     Return: boolean (True if protein error arises, False if no error)"""
 
     # checks valid filetype of protein_file
-    print(protein_file)
     if file_type_error(protein_file):
         return True
 
@@ -115,8 +110,8 @@ def invalid_protein_error(protein_file, chain):
         return True
 
     # checks protein preparation
-    # if protein_preparation_error(protein_file):
-    #     return True
+    if protein_diagnostics_error(protein_file):
+        return True
     
     #returns false if no errors found
     return False 
@@ -146,10 +141,11 @@ def residue_error(residue_info, protein_type, args):
     - protein_type: type of protein (either receptor or ligand)
     - args: user parsed arguments
     
-    Return: True (if error), False (if no error)""" \
-    # checking regex pattern of residue_info (3 letters followed by res num)
-    if regex_mismatch('^[A-Za-z]{3}\d+$', residue_info):
-        logger.critical('Residue information incorrect; must be three letter AA code followed by residue number')
+    Return: True (if error), False (if no error)""" 
+
+    # checking regex pattern of residue_info (string of 3 character id like HIS or 85C followed by res num)
+    if regex_mismatch('^[A-Za-z0-9]{3}\d+$', residue_info):
+        logger.critical(f'Residue information of {residue_info} incorrect; must be three character residue code followed by residue number (e.g. HIS375)')
         return True 
     
     if protein_type == 'receptor':
@@ -166,7 +162,7 @@ def residue_error(residue_info, protein_type, args):
     for st in StructureReader(protein_file):
         for chain in st.chain:
             for residue in chain.residue:
-                if (residue.pdbres == int(residue_info[:3])) and (residue.resnum == residue_info[3:]):
+                if (residue.pdbres.replace(" ", "") == residue_info[:3]) and (residue.resnum == int(residue_info[3:])): # sometimes pdbres has empty spaces, so remove those
                     if (protein_chain is None) or (chain == protein_chain):
                         return False # residue correctly found
     
@@ -197,14 +193,12 @@ def distance_constraint_error(line_num, args, constraint_line_split):
         return True
 
     # check the receptor residue input
-    protein_file = args.receptor_prot
-    if residue_error(constraint_line_split[3], protein_file, args):
+    if residue_error(constraint_line_split[3], "receptor", args):
         logger.critical(f'Check the distance constraint in line {line_num}. Receptor residue does not exist in receptor protein + chain')
         return True
     
     # check the ligand residue input
-    protein_file = args.ligand_prot
-    if residue_error(constraint_line_split[4], protein_file, args):
+    if residue_error(constraint_line_split[4], "ligand", args):
         logger.critical(f'Check the distance constraint in line {line_num}. Ligand residue does not exist in ligand protein + chain')
         return True
     
@@ -212,14 +206,14 @@ def distance_constraint_error(line_num, args, constraint_line_split):
 
 def attraction_constraint_error(line_num, args, constraint_line_split):
     """ Checks line in constraint file input if it starts with attraction. Makes sure that it follows the format:
-    "attraction" | attraction_bonus (float btw 0.11 and 0.99) | protein_type (either "receptor" or "ligand") | Residues Involved (separated by space)
+    attraction | attraction_bonus (float btw 0.11 and 0.99) | protein_type (either receptor or ligand) | Residues Involved (separated by space)
     
     Input:
     - line_num: line number in file
     - args: user-parsed arguments
     - constraint_line_split: split line of constraint file as list (result of file.readline().split())
     
-    Return: boolean (True if error, False if no error)"""
+    Return: boolean (True if error, False if no error) """
 
     # check attraction bonus float btw 0.11 and 0.99
     try: 
@@ -230,8 +224,10 @@ def attraction_constraint_error(line_num, args, constraint_line_split):
         return True 
     except AssertionError:
         logger.critical(f'Check the attraction consrtraint in line {line_num}. bonus must be between 0.11 and 0.99')
+        return True
 
     # check that the correct number of arguments exist
+    
     if len(constraint_line_split) < 4:
         logger.critical(f'Check the attraction constraint in line {line_num}. Must have at least 4 arguments.')
         return True
@@ -314,25 +310,25 @@ def invalid_constraints_error(args, input_constraints_txt):
     # iterating through lines 
     with open(input_constraints_txt, 'r') as f:
         for line_num, line in enumerate(f, start = 1):
-            line_stripped = line.strip()
+            line_split = line.strip().split()
 
             # if line starts with distance, check against distance
-            if line_stripped[0] == 'distance':
-                if distance_constraint_error(line_num, args, line_stripped.split()):
+            if line_split[0] == 'distance':
+                if distance_constraint_error(line_num, args, line_split):
                     return True
             
             # if line starts with attraction, check against attraction
-            elif line_stripped[0] == 'attraction':
-                if attraction_constraint_error(line_num, args, line_stripped.split()):
+            elif line_split[0] == 'attraction':
+                if attraction_constraint_error(line_num, args, line_split):
                     return True
             
             # if line starts with repulsion, check against repulsion
-            elif line_stripped[0] == 'repulsion':
-                if repulsion_constraint_error(line_num, args, line_stripped.split()):
+            elif line_split[0] == 'repulsion':
+                if repulsion_constraint_error(line_num, args, line_split):
                     return True
 
             # else check if comment
-            elif line_stripped.startswith('#'):
+            elif line_split[0].startswith('#'):
                 continue
 
             # finally invalid line
@@ -340,7 +336,7 @@ def invalid_constraints_error(args, input_constraints_txt):
                 logger.critical('Line {line_num} is invalid; must be comment or start with [distance, attraction, repulsion]')
                 return True 
 
-def check_args(parser, system_arg, args, unknowns):
+def check_parsed_args(parser, system_arg, args, unknowns):
     """ Given the result of parsing user arguments, checks whether the arguments 
     are valid. Logs specific error messages and returns false if certain fatal issues are found. 
     Otherwise, log warnings and proceeds with runs.
@@ -378,3 +374,26 @@ def check_args(parser, system_arg, args, unknowns):
         return True 
 
     return False 
+
+def check_inputted_args(args):
+    """ Checks inputted args (such as parsed in TCM workflow but specific piper args are passed into piper).
+    Same as check_parsed_args but removes checks on system args and unknowns (these should be handled globally
+    under TCM checks). """
+
+    # checks if receptor protein info is valid
+    if invalid_protein_error(args.receptor_prot, args.receptor_chain) is True:
+        logger.critical('Receptor protein failed checks. See above for more detail.')
+        return True
+
+    # checks if ligand protein info is valid
+    if invalid_protein_error(args.ligand_prot, args.ligand_chain) is True:
+        logger.critical('Ligand protein failed checks. See above for more detail.')
+        return True
+
+    # check constraints
+    if invalid_constraints_error(args, args.constraint):
+        logger.critical('Constraints file is invalid. See above for more details.')
+        return True
+
+    return False
+
