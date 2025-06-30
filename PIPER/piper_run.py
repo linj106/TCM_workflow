@@ -107,7 +107,7 @@ def piper(args, params, SCHRODINGER, piper_dir):
 
     #log the cmd
     logger.info("Running PIPER protein-protein docking: %s"%' '.join(command))
-
+    
     # enter into piper_dir (to store results there) and run 
     os.chdir(piper_dir)
     run_job(command)
