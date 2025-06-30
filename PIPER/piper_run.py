@@ -71,7 +71,7 @@ def get_inputs(args):
     lig = args.ligand_prot
     lig_chain = args.ligand_chain
 
-    return [f'-receptor {rec}', f'-receptor_chain {rec_chain}', f'-ligand {lig}', f'-ligand_chain {lig_chain}']
+    return [f'-receptor {rec}'] + [f'-receptor_chain {rec_chain}'] if rec_chain is not None else [] + [f'-ligand {lig}'] + [f'-ligand_chain {lig_chain}'] if lig_chain is not None else []
 
 def piper(args, params, SCHRODINGER, piper_dir):
     """ Runs piper job.
