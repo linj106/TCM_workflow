@@ -1,12 +1,12 @@
-## Import Python modules
+#Import Python modules
 import logging
 import re
 
-## Import Schrodinger modules 
+# #Import Schrodinger modules 
 from schrodinger.structure import StructureReader, StructureWriter
 from schrodinger.application.prepwizard2.diagnostics import get_problems
 
-### Initiate logger ###
+###Initiate logger###
 logger = logging.getLogger(__name__)
 
 # checking protein file inputs
@@ -109,7 +109,7 @@ def invalid_protein_error(protein_file, chain):
     if protein_loading_error(protein_file, chain):
         return True
 
-    # checks protein preparation
+    #v checks protein preparation
     if protein_diagnostics_error(protein_file):
         return True
     
@@ -128,9 +128,10 @@ def regex_mismatch(pattern, input):
     Return: boolean (True if pattern does not match, False if it does match) """
 
     if re.fullmatch(pattern, input):
-        return True 
-    else:
         return False
+    
+    else:
+        return True
 
 def residue_error(residue_info, protein_type, args):
     """ Checks that the residue is the correct pattern (e.g. HIS375) and checks that the residue exists within the protein file (including part of the specific 
@@ -141,11 +142,12 @@ def residue_error(residue_info, protein_type, args):
     - protein_type: type of protein (either receptor or ligand)
     - args: user parsed arguments
     
-    Return: True (if error), False (if no error)""" 
+    Return: True (if error), False (if no error)""" \
+    
+    # checking regex pattern of residue_info - string of 3 letters or numbers for residue (either AA or ligand) followed by res num
 
-    # checking regex pattern of residue_info (string of 3 character id like HIS or 85C followed by res num)
     if regex_mismatch('^[A-Za-z0-9]{3}\d+$', residue_info):
-        logger.critical(f'Residue information of {residue_info} incorrect; must be three character residue code followed by residue number (e.g. HIS375)')
+        logger.critical(f'Residue information of {residue_info} incorrect; must be three letter/num code followed by residue number')
         return True 
     
     if protein_type == 'receptor':
@@ -154,16 +156,16 @@ def residue_error(residue_info, protein_type, args):
 
     elif protein_type == 'ligand':
         protein_file = args.ligand_prot
-        protein_chain = args.receptor_chain
+        protein_chain = args.ligand_chain
 
     else:
-        raise AssertionError, "protein type can only be receptor or ligand"
+        raise AssertionError("protein type can only be receptor or ligand")
     
     for st in StructureReader(protein_file):
         for chain in st.chain:
             for residue in chain.residue:
                 if (residue.pdbres.replace(" ", "") == residue_info[:3]) and (residue.resnum == int(residue_info[3:])): # sometimes pdbres has empty spaces, so remove those
-                    if (protein_chain is None) or (chain == protein_chain):
+                    if (protein_chain is None) or (residue.chain == protein_chain):
                         return False # residue correctly found
     
     return True # residue not found 
@@ -206,14 +208,14 @@ def distance_constraint_error(line_num, args, constraint_line_split):
 
 def attraction_constraint_error(line_num, args, constraint_line_split):
     """ Checks line in constraint file input if it starts with attraction. Makes sure that it follows the format:
-    attraction | attraction_bonus (float btw 0.11 and 0.99) | protein_type (either receptor or ligand) | Residues Involved (separated by space)
+    "attraction" | attraction_bonus (float btw 0.11 and 0.99) | protein_type (either "receptor" or "ligand") | Residues Involved (separated by space)
     
     Input:
     - line_num: line number in file
     - args: user-parsed arguments
     - constraint_line_split: split line of constraint file as list (result of file.readline().split())
     
-    Return: boolean (True if error, False if no error) """
+    Return: boolean (True if error, False if no error)"""
 
     # check attraction bonus float btw 0.11 and 0.99
     try: 
@@ -224,10 +226,8 @@ def attraction_constraint_error(line_num, args, constraint_line_split):
         return True 
     except AssertionError:
         logger.critical(f'Check the attraction consrtraint in line {line_num}. bonus must be between 0.11 and 0.99')
-        return True
 
     # check that the correct number of arguments exist
-    
     if len(constraint_line_split) < 4:
         logger.critical(f'Check the attraction constraint in line {line_num}. Must have at least 4 arguments.')
         return True
@@ -311,7 +311,6 @@ def invalid_constraints_error(args, input_constraints_txt):
     with open(input_constraints_txt, 'r') as f:
         for line_num, line in enumerate(f, start = 1):
             line_split = line.strip().split()
-
             # if line starts with distance, check against distance
             if line_split[0] == 'distance':
                 if distance_constraint_error(line_num, args, line_split):
@@ -333,7 +332,7 @@ def invalid_constraints_error(args, input_constraints_txt):
 
             # finally invalid line
             else:
-                logger.critical('Line {line_num} is invalid; must be comment or start with [distance, attraction, repulsion]')
+                logger.critical(f'Line {line_num} is invalid; must be comment or start with [distance, attraction, repulsion]')
                 return True 
 
 def check_parsed_args(parser, system_arg, args, unknowns):
@@ -376,7 +375,7 @@ def check_parsed_args(parser, system_arg, args, unknowns):
     return False 
 
 def check_inputted_args(args):
-    """ Checks inputted args (such as parsed in TCM workflow but specific piper args are passed into piper).
+    """ Checks inputted args (such as parsed in TCM workflow but specific piper args are passed into piper). 
     Same as check_parsed_args but removes checks on system args and unknowns (these should be handled globally
     under TCM checks). """
 
@@ -388,12 +387,12 @@ def check_inputted_args(args):
     # checks if ligand protein info is valid
     if invalid_protein_error(args.ligand_prot, args.ligand_chain) is True:
         logger.critical('Ligand protein failed checks. See above for more detail.')
-        return True
-
+        return True 
+    
     # check constraints
     if invalid_constraints_error(args, args.constraint):
         logger.critical('Constraints file is invalid. See above for more details.')
-        return True
+        return True 
 
-    return False
+    return False 
 
