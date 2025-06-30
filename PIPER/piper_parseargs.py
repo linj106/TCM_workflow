@@ -38,8 +38,6 @@ def str2bool(v: str) -> bool:
         return True
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
-    elif v in ('0', '1', 'T', 'F'):
-        return v in ('1', 'T')
     else:
         raise argparse.ArgumentTypeError(f"Invalid boolean value: {v}")
     
@@ -61,6 +59,7 @@ def build_parser():
         Command Line Implementation of PIPER from Schrodinger. Parses user arguments 
         for input receptor protein and ligand protein as well as job settings 
         to create proper input files for system call to PIPER. 
+        ----------------------------------------------
         '''))
     
     # organizing the parser arguments by groups
@@ -68,6 +67,7 @@ def build_parser():
     constraints = parser.add_argument_group('DISTANCE AND REPULSION CONSTRAINTS') # arguments related to user inputted distance constraints (e.g. HDX-MS data)
     job_control = parser.add_argument_group('JOB CONTROL INFORMATION') #arguments related to job control / server submission (e.g. HOST and JOBNAME)
     options = parser.add_argument_group('PIPER DOCKING SETTINGS') #arguments related to specific PIPER settings (e.g. number of poses)
+    default = parser.add_argument_group('DEFAULT SETTINGS') # arguments related to changing default PIPER settings (impt for module in TCM)
 
     # adding specific arguments to our input group
     input.add_argument('-r', '--receptor', dest = 'receptor_prot', required = True, help = 'protein file acting as receptor in PIPER docking; must be .mae or .pdb')
@@ -76,23 +76,27 @@ def build_parser():
     input.add_argument('--l_chain', '--ligand_chain', dest = 'ligand_chain', help = 'specific chain in ligand protein to use as ligand')
     
     # adding specific arguments to change job settings / options 
-    options.add_argument('--use_nonstandard_residue', choices = ['y', 'n'], dest = 'use_nonstandard_residue', help = 'whether or not to use nonstandard residues in docking calculations; must be followed by y (yes) or n (no)')
+    options.add_argument('--use_nonstandard_residue', choices = ['y', 'n', 'yes', 'no'], dest = 'use_nonstandard_residue', help = 'whether or not to use nonstandard residues in docking calculations (options are yes/y or no/n)')
+    options.add_argument('--refinement_protocol', choices = ['none', 'interface', 'vacuum_minimize', 'minimize'], dest = 'refinement_protocol', help = 'Refinement protocol to run after docking')
     options.add_argument('--rotations', dest = 'rotations', type = int, help = 'number of rotation matrices to use from rotation file')
     options.add_argument('--poses', dest = 'poses', type = int, help = 'max number of different poses to return from docking')
-    options.add_argument('--raw', dest = 'raw', type = str2bool, help = 'store all poses in pose-viewer format without refinement; requires boolean input (T or F)')
+    options.add_argument('--raw', dest = 'raw', type = str2bool, help = 'store all poses in pose-viewer format without refinement (overrides refinement protocol to none); requires bool')
 
     # adding specific arguments to change server/job info group
     job_control.add_argument('--host', dest = 'HOST', type = str, help = 'specific host on BMS RHEL8 cluster to submit job to')
     job_control.add_argument('--jobname', dest = 'jobname', type = str, help = 'custom name for job to display on BMS RHEL8 cluster')
     job_control.add_argument('--ompi', dest = 'OMPI', type = int, help = 'number of processors to run job on')
-    job_control.add_argument('-d, --debug', dest = 'DEBUG', action = 'store_true', help = 'shows details of job control to help with debugging')
-    job_control.add_argument('--job_id', dest = 'JOBID', type = str2bool, help = 'runs the job through job control layer')
-    job_control.add_argument('-o', '--output', dest = 'output', type = str, help = 'output directory to save results to; directory must already exist')
-    
+    job_control.add_argument('-d, --debug', dest = 'DEBUG', action = str2bool, help = 'shows details of job control to help with debugging; requires bool')
+    job_control.add_argument('--job_id', dest = 'JOBID', type = str2bool, help = 'runs the job through job control layer; requires bool')
+    job_control.add_argument('--TMPLAUNCHDIR', dest = 'TMPLAUNCHDIR', type = str2bool, help = 'launches temporary directory to store the data used by system; requires bool')
+
     # adding specific arguments to add constraints
     constraints.add_argument('--constraint', dest = 'constraint', 
         help = f"Input .txt file containing all constraints information (see example input at {PIPER_path}/example_PIPER_constraints.txt")
     
+    # adding specific arguments to change default settings (also for use in modules in which TCM workflow requires default json files to change settings of jobs)
+    default.add_argument('--default', dest = 'default', type = str, help = 'json file containing the default settings for IFD job')
+
     return parser
 
 def parse_and_check_args():
@@ -109,59 +113,9 @@ def parse_and_check_args():
     args, unknowns = parser.parse_known_args()
 
     # making sure that the arguments are valid before proceeding
-    if piper_check_input.check_args(parser ,sys.argv, args, unknowns) is True:
+    if piper_check_input.check_parsed_args(parser ,sys.argv, args, unknowns) is True:
         sys.exit(0) # exits because fatal error found
     
     return args
 
-
-## DEPRECATED
-    # constraints.add_argument('--dist', '--distance_constraint', nargs = '+', dest = 'distance_constraint', 
-    #     help = """
-    #     Distance Constraints Argument
-    #     - input: .txt file containing distance constraints info (example below)
-    #     - use new line for different distance constraint pairs
-    #     - REC_RESIDUE (3 Letter AA + Residue Num) LIG_RESIDUE (3 Letter AA + Residue Num) DMIN DMAX
-
-    #     ### example_distance.txt
-    #     HIS354 LYS672 2.0 5.0
-    #     GLY354 HIS765 2.0 7.0 
-        
-    #     """)
-    
-    # constraints.add_argument('--attract', '--attraction', nargs = '+', dest = 'attraction', 
-    #     help = """
-    #     Attraction Constraints Argument
-    #     - input: one or more .txt files each containing separate attraction constraints info 
-
-    #     Guidance on .txt file
-    #     - LINE1: residues involved in attraction in the form of 3 letter AA + residue num (e.g. HIS375)
-    #     - LINE2: attraction bonus 
-    #     - LINE3: protein ('receptor' or 'ligand')
-
-    #     ### example_attraction.txt
-    #     HIS354 LYS672 GLY354 HIS765
-    #     0.11
-    #     receptor
-        
-    #     """)
-    
-    # constraints.add_argument('--repel', '--repulsion', nargs = '+', dest = 'repulsion', 
-    #     help = """
-    #     Repulsion Constraints Argument
-    #     - input: one or more .txt files each containing separate repulsion constraints info 
-
-    #     Guidance on .txt file
-    #     - LINE1: residues involved in repulsion in the form of 3 letter AA + residue num (e.g. HIS375)
-    #     - LINE2: protein in which the residues are on ('receptor' or 'ligand')
-
-    #     ### example_repulsion.txt
-    #     HIS354 LYS672 GLY354 HIS765
-    #     receptor
-        
-    #     """)
-
-
-
-    
 
