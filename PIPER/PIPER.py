@@ -55,8 +55,9 @@ def run_piper(piper_dir, SCHRODINGER, piper_args = None):
         if piper_check_input.check_inputted_args(args):
             sys.exit(0)
 
-    #Building constraints and incorporating file into args
-    args = piper_constraints.main(args, piper_dir)
+    #Building constraints and incorporating file into args if passed in 
+    if args.constraint is not None:
+        args = piper_constraints.main(args, piper_dir)
 
     #Getting default settings (from user if argument passed in)
     default = piper_default.main(PIPER_path, os.path.join(os.getcwd(), args.default))
