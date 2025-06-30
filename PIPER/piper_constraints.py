@@ -1,6 +1,5 @@
 #Import Python modules
 import logging
-import sys
 import os
 import json
 
@@ -194,6 +193,7 @@ def parse_constraint_file(constraint_file):
     # build distance constraint and add
     all_constraints.append(build_distance_constraint(distance_pair_list))
     
+    return all_constraints
 
 def main(args, path_to_dir):
     """ Writes constraints list from args and saves to constraints.json file in path_to_dir. Modifies 
@@ -201,7 +201,7 @@ def main(args, path_to_dir):
     
     Returns:
     - new args with constraint_file argument """
-
+    
     # builds and writes constraints file 
     constraints_list = parse_constraint_file(args.constraint)
     write_constraint_json(constraints_list, path_to_dir)
@@ -211,123 +211,5 @@ def main(args, path_to_dir):
 
     # adding new argument with path to constraint file
     args.constraints_file = os.path.join(path_to_dir, "constraints.json")
-    
+
     return args
-
-# DEPRECATED
-def parse_distance_constraint_file(distance_constraint_file):
-    """ Builds dictionary representation by reading through distance constraint file.
-    
-    Input:
-    - distance_constraint_file: .txt file that contains distance restraints
-    
-    Return:
-    - dictionary representation of distance constraint """
-
-    distance_pair_list = []
-
-    with open(distance_constraint_file, 'r') as file: # opening distance_constraint file
-        for constraint in file: # iterating through lines
-            constraint = constraint.strip()
-            information = constraint.split() #splitting line by space
-            
-            # defining specific information 
-            receptor_residue = information[0]
-            ligand_residue = information[1]
-            dmin = float(information[2])
-            dmax = float(information[3])
-
-            # splitting residue info into res num and res type
-            # e.g. 'HIS238' -> 'HIS', '238'
-            receptor_residue_type = receptor_residue[:3]
-            receptor_residue_num = int(receptor_residue[3:])
-
-            ligand_residue_type = ligand_residue[:3]
-            ligand_residue_num = int(ligand_residue[3:])
-
-            # appending distance pair
-            distance_pair = (receptor_residue_num, receptor_residue_type, ligand_residue_num, ligand_residue_type, dmin, dmax)
-            distance_pair_list.append(distance_pair)
-
-    return build_distance_constraint(distance_pair_list)
-
-def parse_attraction_file(attraction_constraint_file):
-    """ Builds dictionary representation by reading through attraction constraint file
-    
-    Input:
-    - attraction_constraint_file: .txt file that contains attraction constraint info (for a single attraction set)
-    
-    Return:
-    - dictionary representation of attraction constraint """
-
-    with open(attraction_constraint_file, 'r') as file:
-
-        # reading in line 1 which contains all the residues
-        residues = file.readline().strip().split()
-
-        # reading in line 2 which contains the attraction bonus
-        bonus = round(float(file.readline().strip()), 2)
-
-        # reading in line 3 which contains either receptor or ligand
-        receptor_or_lig = file.readline().strip()
-
-    # building parsed residues into selected residue list with proper formatting
-    selected_residues = []
-    for residue in residues:
-        residue_num = int(residue[3:])
-        residue_type = residue[:3]
-        selected_residues.append((residue_num, residue_type))
-    
-    return build_attraction_constraint(selected_residues, receptor_or_lig, bonus)
-
-def parse_repulsion_file(repulsion_constraint_file):
-    """ Builds dictionary representation by reading through repulsion constraint file
-    
-    Input:
-    - attraction_constraint_file: .txt file that contains repulsion constraint info (for a single attraction set)
-    
-    Return:
-    - dictionary representation of repulsion constraint """
-
-    with open(repulsion_constraint_file, 'r') as file:
-
-        # reading in line 1 which contains all the residues
-        residues = file.readline().strip().split()
-
-        # reading in line 2 which contains either receptor or ligand
-        receptor_or_lig = file.readline().strip()
-
-    # building parsed residues into selected residue list with proper formatting
-    selected_residues = []
-    for residue in residues:
-        residue_num = int(residue[3:])
-        residue_type = residue[:3]
-        selected_residues.append((residue_num, residue_type))
-    
-    return build_repulsion_constraint(selected_residues, receptor_or_lig)
-
-def build_constraints(args):
-    """ Parses user inputs of args and builds dictionary representation of user-inputted restraints.
-    
-    Input: 
-    - user-parsed arguments with attributes of .distance_constraint, .attraction, and .repulsion (if user inputted)
-    
-    Returns: list containing dictionary representation of all constraints ready to write to json """
-
-    all_constraints = []
-
-    if args.distance_constraint is not None: # if distance constraints exist from user
-        print(args.distance_constraint, args.attraction)
-        for file in args.distance_constraint: # go through list of files and parse each separately
-            print(file)
-            all_constraints.append(parse_distance_constraint_file(file))
-
-    if args.attraction is not None: # if attraction constraints exist from user
-        for file in args.attraction: # go through list of files and parse each separately
-            all_constraints.append(parse_attraction_file(file))
-
-    if args.repulsion is not None: # if repulsion constraints exist from user
-        for file in args.repulsion: # go through list of files and parse each separately
-            all_constraints.append(parse_repulsion_file(file))
-
-    return all_constraints
