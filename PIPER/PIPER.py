@@ -37,6 +37,10 @@ def update_default_w_args(default, args):
         del default['ligand_chain']
     if 'receptor_chain' in default:
         del default['receptor_chain']
+    
+    # delete default if argument parsed in
+    if 'default' in default:
+        del default['default']
 
     return default 
 
@@ -101,7 +105,7 @@ def set_up(jobname = 'prot_prot_docking'):
     #Creating directory for IFD workflow and results in cwd 
     piper_dir = os.path.join(master_dir, jobname)
     os.makedirs(piper_dir, exist_ok=True)
-    fh = logging.FileHandler(os.path.join(piper_dir, f'{jobname}.log'))
+    fh = logging.FileHandler(os.path.join(master_dir, f'{jobname}_CLI.log'))
 
     #Logger settings
     fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')) #Create writing format for logging
@@ -122,6 +126,6 @@ if __name__ == '__main__':
     
     # Setting up paths and loggers with specific output directory or None
     master_dir, piper_dir, SCHRODINGER = set_up(jobname)
-
+    
     # Running the piper job 
     run_piper(piper_dir, SCHRODINGER)
