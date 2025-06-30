@@ -109,11 +109,12 @@ def main(PIPER_module_path, PIPER_default_path, user_json_path = None):
         return read_user_json(user_json_path)
 
     # otherwise tries to read in institutional arguments
-    try:
-        return read_institution_json(PIPER_default_path)
+    if PIPER_default_path is not None:
+        try:
+            return read_institution_json(PIPER_default_path)
     
-    # if institutional file not found, then gets default arguments defined in script 
-    except FileNotFoundError:
-        logger.warning(f'Institutional json file not found. Reading in default arguments from {PIPER_module_path}/piper_default.py.')
+        # if institutional file not found, then gets default arguments defined in script 
+        except FileNotFoundError:
+            logger.warning(f'Institutional json file not found. Reading in default arguments from {PIPER_module_path}/piper_default.py.')
     
     return get_default_PIPER()
