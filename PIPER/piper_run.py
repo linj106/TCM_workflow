@@ -71,7 +71,16 @@ def get_inputs(args):
     lig = args.ligand_prot
     lig_chain = args.ligand_chain
 
-    return [f'-receptor {rec}'] + [f'-receptor_chain {rec_chain}'] if rec_chain is not None else [] + [f'-ligand {lig}'] + [f'-ligand_chain {lig_chain}'] if lig_chain is not None else []
+    # building input argument (appending receptor and ligand and chain info if not None)
+    input = []
+    input.append(f'-receptor {rec}')
+    if rec_chain is not None:
+        input.append(f'-receptor_chain {rec_chain}')
+    input.append(f'-ligand {lig}')
+    if lig_chain is not None:
+        input.append(f'-ligand_chain {lig_chain}')
+
+    return input
 
 def piper(args, params, SCHRODINGER, piper_dir):
     """ Runs piper job.
@@ -86,7 +95,7 @@ def piper(args, params, SCHRODINGER, piper_dir):
     
     #input receptor and ligand information
     input = get_inputs(args)
-
+    
     #build cmd of params
     params_cmd = build_params_command(params)
 
