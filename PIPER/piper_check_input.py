@@ -48,7 +48,7 @@ def protein_loading_error(protein_file, chain):
             logger.critical(f'No protein structure exists within the file.')
             return True
         
-        if chain not in protein_chains: # user-inputted chain doesn't exist in the file 
+        if (chain is not None) and (chain not in protein_chains): # user-inputted chain doesn't exist in the file 
             logger.critical(f'Selected chain does not exist in protein file. Please select another chain from {protein_chains} or upload another file')
             return True
     except FileNotFoundError as fnf: # file not found / invalid path
