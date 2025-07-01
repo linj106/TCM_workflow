@@ -53,12 +53,12 @@ def write_default_PIPER(user_dir_path):
     parameters = {
     'poses': 30,
     'rotations': 70000,
-    'refinement_protocol':'None',
+    'refinement_protocol':'none',
     'raw': False,
     'OMPI': 10,
     'JOBID': True,
     'use_nonstandard_residue': 'yes',
-    'HOST': 'js-hopi-sge-xl-rhel8:10',
+    'HOST': 'js-hopi-sge-xl-rhel8',
     'TMPLAUNCHDIR': True,
     'DEBUG': False
     }
@@ -83,19 +83,19 @@ def get_default_PIPER():
     parameters = {
     'poses': 30,
     'rotations': 70000,
-    'refinement_protocol':'None',
+    'refinement_protocol':'none',
     'raw': False,
     'OMPI': 10,
     'JOBID': True,
     'use_nonstandard_residue': 'yes',
-    'HOST': 'js-hopi-sge-xl-rhel8:10',
+    'HOST': 'js-hopi-sge-xl-rhel8',
     'TMPLAUNCHDIR': True,
     'DEBUG': False
     }
 
     return parameters
 
-def main(PIPER_module_path, PIPER_default_path, user_json_path = None):
+def main(PIPER_module_path, PIPER_default_path = '/home/linj106/TCM_workflow/institutional_parameters/PIPER_default_params.json', user_json_path = None):
     """ Retrieves the correct default settings based on user inputs. 
     
     Input:
@@ -112,9 +112,9 @@ def main(PIPER_module_path, PIPER_default_path, user_json_path = None):
     if PIPER_default_path is not None:
         try:
             return read_institution_json(PIPER_default_path)
-    
+        
         # if institutional file not found, then gets default arguments defined in script 
         except FileNotFoundError:
             logger.warning(f'Institutional json file not found. Reading in default arguments from {PIPER_module_path}/piper_default.py.')
-    
+        
     return get_default_PIPER()
