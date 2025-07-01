@@ -17,7 +17,7 @@ def file_type_error(file, allowed_file_type = ['.mae', '.maegz', '.pdb']):
 
     file_no_path = file.split('/')[-1]  #split file input by '/' in case user inputs in file path and retrieves the file name (last item in split list)
     *file_name, file_type = file_no_path.split('.') # splits by '.'; file type is the last thing in split list and file name collects everything else
-    if file_type in allowed_file_type:
+    if file_type not in allowed_file_type:
         return True
     else:
         return False
@@ -28,7 +28,10 @@ def protein_file_type_error(protein_file_path):
     
     Return: boolean (True if file-type-error, False if no error) """
 
-    return file_type_error(protein_file_path, allowed_file_type = ['.mae', '.maegz', '.pdb']) # calls file-type-error with allowed file types for inputs
+    if file_type_error(protein_file_path, allowed_file_type = ['.mae', '.maegz', '.pdb']): # calls file-type-error with allowed file types for inputs
+        logger.critical("File type error, protein files must end in .mae, .maegz, or .pdb")
+    else:
+        return False 
 
 def protein_loading_error(protein_file, chain):
     """ Given specific protein file and chain to act as ligand or receptor, checks whether the protein file is loadable and the selected protein chain is present.
