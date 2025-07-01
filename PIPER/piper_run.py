@@ -24,19 +24,27 @@ def run_job(command):
                 logger.debug(line)
 
 # building run command from params dictionary
-def build_params_command(params):
+def build_params_command(params, cmd_line = ['poses', 'rotations', 'refinement_protocol', 'raw', 'OMPI', 
+                'JOBID', 'use_non_standard_residue', 'HOST', 'TMPLAUNCHDIR', 'DEBUG', 'constraints_file']):
     """ Builds terminal commands from params dictionary.
 
-    Input: params dictionary  
+    Input: 
+    - params dictionary 
+    - cmd_line: list of cmds to include in this section 
     Returns: list of run command"""
 
     cmd = []
 
     # iterating over all parameters and adding to cmd in correct format
     for k,v in params.items():
+
+        # if parameter is not passed to PIPER on cmd line (or if that part will be inputted in another fxn)
+        if k not in cmd_line:
+            continue
+
         #True or False parameters convert to the format where flag is included (T) or not included
         #e.g. 'raw':True goes to -raw while 'raw':False has no flag in cmd
-        if v is True:
+        elif v is True:
             cmd.append(f'-{k}')
 
         elif v is False:
@@ -79,7 +87,7 @@ def get_inputs(args):
     input.append(f'-ligand {lig}')
     if lig_chain is not None:
         input.append(f'-ligand_chain {lig_chain}')
-
+    
     return input
 
 def piper(args, params, SCHRODINGER, piper_dir):
@@ -95,7 +103,7 @@ def piper(args, params, SCHRODINGER, piper_dir):
     
     #input receptor and ligand information
     input = get_inputs(args)
-    
+
     #build cmd of params
     params_cmd = build_params_command(params)
 
@@ -107,7 +115,7 @@ def piper(args, params, SCHRODINGER, piper_dir):
 
     #log the cmd
     logger.info("Running PIPER protein-protein docking: %s"%' '.join(command))
-    
+
     # enter into piper_dir (to store results there) and run 
     os.chdir(piper_dir)
     run_job(command)
