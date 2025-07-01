@@ -10,7 +10,7 @@ from schrodinger.application.prepwizard2.diagnostics import get_problems
 logger = logging.getLogger(__name__)
 
 # checking protein file inputs
-def file_type_error(file, allowed_file_type = ['.mae', '.maegz', '.pdb']):
+def file_type_error(file, allowed_file_type = ['mae', 'maegz', 'pdb']):
     """ Given a specific file, checks whether a file_type_error arises where the file is not in the allowed file type inputs to PIPER
     
     Return: boolean (True if file-type-error, False if no error) """
@@ -28,7 +28,7 @@ def protein_file_type_error(protein_file_path):
     
     Return: boolean (True if file-type-error, False if no error) """
 
-    if file_type_error(protein_file_path, allowed_file_type = ['.mae', '.maegz', '.pdb']): # calls file-type-error with allowed file types for inputs
+    if file_type_error(protein_file_path, allowed_file_type = ['mae', 'maegz', 'pdb']): # calls file-type-error with allowed file types for inputs
         logger.critical('File type error, protein files must end in .mae, .maegz, or .pdb')
         return True
     else:
