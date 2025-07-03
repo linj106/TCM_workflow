@@ -51,11 +51,11 @@ def write_default_IFD(user_dir_path):
 
     #Getting parameters dictionary
     parameters = {
-    'NGLIDDECPU': 20,
+    'NGLIDECPU': 20,
     'NPRIMECPU': 20, 
     'NOLOCAL': True, 
     'HOST': 'js-hopi-sge-xxl-rhel8',
-    'SUBHOST': 'js-hpi-sge-xxl-rhel8',
+    'SUBHOST': 'js-hopi-sge-xxl-rhel8',
     'TMPLAUNCHDIR': True}
 
     #Convert dictionary to json object
@@ -76,11 +76,11 @@ def get_default_IFD():
 
     # defines default parameters for PIPER job
     parameters = {
-    'NGLIDDECPU': 20,
+    'NGLIDECPU': 20,
     'NPRIMECPU': 20, 
     'NOLOCAL': True, 
     'HOST': 'js-hopi-sge-xxl-rhel8',
-    'SUBHOST': 'js-hpi-sge-xxl-rhel8',
+    'SUBHOST': 'js-hopi-sge-xxl-rhel8',
     'TMPLAUNCHDIR': True}
 
     return parameters

@@ -29,19 +29,22 @@ def run_job(command):
                 logger.debug(line)
 
 # building run command from params dictionary
-def build_params_command(params):
+def build_params_command(params, cmd_line = ['NGLIDECPU','NPRIMECPU', 'NOLOCAL', 'HOST', 'SUBHOST', 'TMPLAUNCHDIR', 'DEBUG']):
     """ Builds terminal commands from params dictionary.
 
     Input: params dictionary  
+    - cmd_line: list of arguments that are related to command line
     Returns: list of run command"""
 
     cmd = []
 
     # iterating over all parameters and adding to cmd in correct format
     for k,v in params.items():
+        if k not in cmd_line:
+            continue
         #True or False parameters convert to the format where flag is included (T) or not included
         #e.g. 'raw':True goes to -raw while 'raw':False has no flag in cmd
-        if v is True:
+        elif v is True:
             cmd.append(f'-{k}')
 
         elif v is False:
@@ -67,17 +70,10 @@ def get_inputs(args):
     Input: user-parsed args with .ligand, .proteins
     Returns: tuple of (full_input_protein_path, full_ligand_file_path) """
 
-    cwd = os.getcwd() # getting cwd
     protein = args.proteins
     ligand = args.ligand
 
-    # getting full path to protein file
-    protein_path = os.path.join(cwd, protein)
-
-    # getting full path to ligand file
-    ligand_path = os.path.join(cwd, ligand)
-
-    return (protein_path, ligand_path)
+    return protein, ligand
 
 def make_input_file(args, ifd_dir):
     """Uses arguments in args to create .inp file for IFD. Importantly, certain
@@ -154,4 +150,3 @@ def ifd(args, params, SCHRODINGER, ifd_dir, input_file_name):
     # entering ifd_dir to run job 
     os.chdir(ifd_dir)
     run_job(command)
-

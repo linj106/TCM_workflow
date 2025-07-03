@@ -30,7 +30,7 @@ def update_default_w_args(default, args):
 
     return default 
 
-def set_up(jobname = 'induced_fit_docking'):
+def set_up(jobname = 'induced_fit_docking', output_directory = None):
     """ Initial setup of defining paths and loggers if the script is called as a standalaone function. Builds
     directory and log file based on jobname in current working directory. 
     
@@ -51,9 +51,12 @@ def set_up(jobname = 'induced_fit_docking'):
     homepath = os.getenv('HOME')
 
     #Creating directory for IFD workflow and results in cwd
-    ifd_dir = os.path.join(master_dir, jobname)
-    os.makedirs(ifd_dir, exist_ok=True)
-    fh = logging.FileHandler(os.path.join(ifd_dir, f'{jobname}.log'))
+    if output_directory is None:
+        ifd_dir = os.path.join(master_dir, jobname)
+        os.makedirs(ifd_dir, exist_ok=True)
+    else:
+        ifd_dir = output_directory
+    fh = logging.FileHandler(os.path.join(ifd_dir, f'{jobname}_CLI.log'))
 
     #Logger settings
     fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')) #Create writing format for logging
@@ -87,7 +90,7 @@ def run_ifd(ifd_dir, SCHRODINGER, ifd_args = None):
 
     # Getting default settings (from user if argument passed in which overrides other settings)
     institutional_default_setings = "ADD_HERE"
-    user_default_settings = os.path.join(os.getcwd(), args.default) if args.default is None else None 
+    user_default_settings = args.default
     default = IFD_default.main(IFD_path, institutional_default_setings, user_default_settings)
     
     # Deleting the default arguments from args to only get cmdline linux ones
@@ -103,15 +106,18 @@ def run_ifd(ifd_dir, SCHRODINGER, ifd_args = None):
 if __name__ == '__main__':
     """ If the script is called in by name (as a standalone module), it will define necessary paths and logger info and run the job. """
 
-    # Initially parsing user arguments to find whether an output directory and/or jobname was inputted
-    jobname = 'induced_fit_docking'
+    # Initially parsing user arguments to find whether an output directory and jobname was inputted
+    jobname = 'prot_prot_docking'
+    output_directory = None
+
     for i, arg in enumerate(sys.argv):
         if (arg == "--jobname") and i + 1 < len(sys.argv): # identifying the flag of name
             jobname = sys.argv[i+1] # saving jobname
-            break
+        if ((arg == "--output") or (arg == "-o")) and i + 1 < len(sys.argv): # identifying the flag of output directory
+            output_directory = os.path.join(os.getcwd(), sys.argv[i+1])
     
     # Setting up paths and loggers with specific output directory or None
-    master_dir, ifd_dir, SCHRODINGER = set_up(jobname)
+    master_dir, ifd_dir, SCHRODINGER = set_up(jobname, output_directory)
 
     # Running the piper job 
     run_ifd(ifd_dir, SCHRODINGER)
