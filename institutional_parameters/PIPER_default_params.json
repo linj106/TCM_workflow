@@ -1,0 +1,12 @@
+{
+    "poses": 30,
+    "rotations": 70000,
+    "refinement_protocol": "none",
+    "raw": false,
+    "OMPI": 20,
+    "JOBID": true,
+    "use_nonstandard_residue": "yes",
+    "HOST": "js-hopi-sge-xl-rhel8",
+    "TMPLAUNCHDIR": true,
+    "DEBUG": false
+}
