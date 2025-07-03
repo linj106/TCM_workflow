@@ -74,9 +74,15 @@ def build_parser():
     default = parser.add_argument_group('DEFAULT SETTINGS') # arguments related to changing default PIPER settings (impt for module in TCM)
 
     # adding specific arguments to our input group
+<<<<<<< Updated upstream
     input.add_argument('-r', '--receptor', '--rec', dest = 'receptor', required = True, type = full_path, help = 'protein file acting as receptor in PIPER docking; must be .mae or .pdb')
     input.add_argument('--r_chain','--receptor_chain', dest = 'receptor_chain', type = str, help = 'specific chain in receptor protein to use as receptor')
     input.add_argument('-l', '--ligand', '--lig', dest = 'ligand', required = True, type = full_path, help = 'protein file acting as ligand in PIPER docking; must be .mae or .pdb')
+=======
+    input.add_argument('-r', '--receptor', '--rec', dest = 'receptor_prot', required = True, type = full_path, help = 'protein file acting as receptor in PIPER docking; must be .mae or .pdb')
+    input.add_argument('--r_chain','--receptor_chain', dest = 'receptor_chain', type = str, help = 'specific chain in receptor protein to use as receptor')
+    input.add_argument('-l', '--ligand', '--lig', dest = 'ligand_prot', required = True, type = full_path, help = 'protein file acting as ligand in PIPER docking; must be .mae or .pdb')
+>>>>>>> Stashed changes
     input.add_argument('--l_chain', '--ligand_chain', dest = 'ligand_chain', type = str, help = 'specific chain in ligand protein to use as ligand')
     
     # adding specific arguments to change job settings / options 
@@ -87,16 +93,28 @@ def build_parser():
     options.add_argument('--raw', dest = 'raw', type = str2bool, help = 'store all poses in pose-viewer format without refinement (overrides refinement protocol to none); requires bool')
 
     # adding specific arguments to change server/job info group
+<<<<<<< Updated upstream
     job_control.add_argument('--host', dest = 'HOST', type = str, help = 'specific host on BMS RHEL8 cluster to submit job to')
     job_control.add_argument('--jobname', dest = 'jobname', type = str, help = 'custom name for job to display on BMS RHEL8 cluster')
     job_control.add_argument('--ompi', dest = 'OMPI', type = int, help = 'number of processors to run job on')
     job_control.add_argument('-d, --debug', dest = 'DEBUG', type = str2bool, help = 'shows details of job control to help with debugging; requires bool')
     job_control.add_argument('--job_id', dest = 'JOBID', type = str2bool, help = 'runs the job through job control layer; requires bool')
+=======
+    job_control.add_argument('--host','--HOST', dest = 'HOST', type = str, help = 'specific host on BMS RHEL8 cluster to submit job to')
+    job_control.add_argument('--jobname','--JOBNAME', dest = 'jobname', type = str, help = 'custom name for job to display on BMS RHEL8 cluster')
+    job_control.add_argument('--ompi', '--OMPI', dest = 'OMPI', type = int, help = 'number of processors to run job on')
+    job_control.add_argument('-d, --debug', '--DEBUG', dest = 'DEBUG', type = str2bool, help = 'shows details of job control to help with debugging; requires bool')
+    job_control.add_argument('--job_id', '--JOBID', dest = 'JOBID', type = str2bool, help = 'runs the job through job control layer; requires bool')
+>>>>>>> Stashed changes
     job_control.add_argument('--TMPLAUNCHDIR', dest = 'TMPLAUNCHDIR', type = str2bool, help = 'launches temporary directory to store the data used by system; requires bool')
     job_control.add_argument('-o', '--output', dest = 'output', type = full_path, help = 'directory to place results and loggers in; must already exist')
 
     # adding specific arguments to add constraints
+<<<<<<< Updated upstream
     constraints.add_argument('--constraint', dest = 'constraints_file', type = full_path, 
+=======
+    constraints.add_argument('--constraint', '--constraints', dest = 'constraint', type = full_path, 
+>>>>>>> Stashed changes
         help = f"Input .txt file containing all constraints information (see example input at {PIPER_path}/example_PIPER_constraints.txt")
     
     # adding specific arguments to change default settings (also for use in modules in which TCM workflow requires default json files to change settings of jobs)
@@ -116,13 +134,61 @@ def parse_and_check_args():
     # using parser to parse user inputs
     # collecting known and unknown arguments
     args, unknowns = parser.parse_known_args()
-
     # making sure that the arguments are valid before proceeding
     if piper_check_input.check_parsed_args(parser ,sys.argv, args, unknowns) is True:
         sys.exit(0) # exits because fatal error found
     
     return args, cmd_line
 
+## DEPRECATED
+    # constraints.add_argument('--dist', '--distance_constraint', nargs = '+', dest = 'distance_constraint', 
+    #     help = """
+    #     Distance Constraints Argument
+    #     - input: .txt file containing distance constraints info (example below)
+    #     - use new line for different distance constraint pairs
+    #     - REC_RESIDUE (3 Letter AA + Residue Num) LIG_RESIDUE (3 Letter AA + Residue Num) DMIN DMAX
+
+    #     ### example_distance.txt
+    #     HIS354 LYS672 2.0 5.0
+    #     GLY354 HIS765 2.0 7.0 
+        
+    #     """)
+    
+    # constraints.add_argument('--attract', '--attraction', nargs = '+', dest = 'attraction', 
+    #     help = """
+    #     Attraction Constraints Argument
+    #     - input: one or more .txt files each containing separate attraction constraints info 
+
+    #     Guidance on .txt file
+    #     - LINE1: residues involved in attraction in the form of 3 letter AA + residue num (e.g. HIS375)
+    #     - LINE2: attraction bonus 
+    #     - LINE3: protein ('receptor' or 'ligand')
+
+    #     ### example_attraction.txt
+    #     HIS354 LYS672 GLY354 HIS765
+    #     0.11
+    #     receptor
+        
+    #     """)
+    
+    # constraints.add_argument('--repel', '--repulsion', nargs = '+', dest = 'repulsion', 
+    #     help = """
+    #     Repulsion Constraints Argument
+    #     - input: one or more .txt files each containing separate repulsion constraints info 
+
+    #     Guidance on .txt file
+    #     - LINE1: residues involved in repulsion in the form of 3 letter AA + residue num (e.g. HIS375)
+    #     - LINE2: protein in which the residues are on ('receptor' or 'ligand')
+
+    #     ### example_repulsion.txt
+    #     HIS354 LYS672 GLY354 HIS765
+    #     receptor
+        
+    #     """)
+
+
+
+    
 
 ## DEPRECATED
     # constraints.add_argument('--dist', '--distance_constraint', nargs = '+', dest = 'distance_constraint', 

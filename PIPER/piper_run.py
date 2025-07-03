@@ -25,7 +25,11 @@ def run_job(command):
 
 # building run command from params dictionary
 def build_params_command(params, cmd_line = ['poses', 'rotations', 'refinement_protocol', 'raw', 'OMPI', 
+<<<<<<< Updated upstream
                 'JOBID', 'use_non_standard_residue', 'HOST', 'TMPLAUNCHDIR', 'DEBUG', 'constraints_file']):
+=======
+                'JOBID', 'use_nonstandard_residue', 'HOST', 'TMPLAUNCHDIR', 'DEBUG', 'constraints_file']):
+>>>>>>> Stashed changes
     """ Builds terminal commands from params dictionary.
 
     Input: 

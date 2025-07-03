@@ -39,7 +39,10 @@ def protein_loading_error(protein_file, chain):
     Logs more specific error messages related to loading the protein
     
     Return: boolean (True if error occurs, False if no error)"""
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
     error = False
     # tries loading in the protein and catches specific errors
     try:
@@ -113,8 +116,13 @@ def invalid_protein_error(protein_file, chain):
         return True
 
     # checks protein preparation
+<<<<<<< Updated upstream
     if protein_diagnostics_error(protein_file):
         return True
+=======
+    # if protein_diagnostics_error(protein_file):
+       # return True
+>>>>>>> Stashed changes
 
 # checking the constraints .txt file inputs
 

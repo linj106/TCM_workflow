@@ -117,4 +117,8 @@ def main(PIPER_module_path, PIPER_default_path = '/home/linj106/TCM_workflow/ins
         except FileNotFoundError:
             logger.warning(f'Institutional json file not found. Reading in default arguments from {PIPER_module_path}/piper_default.py.')
         
+<<<<<<< Updated upstream
     return get_default_PIPER()
+=======
+    return get_default_PIPER()
+>>>>>>> Stashed changes
