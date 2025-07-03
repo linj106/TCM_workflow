@@ -66,7 +66,7 @@ def W380_backbone(residue):
 
     if residue.resnum == 380 and residue.pdbres.strip() == 'TRP': # identified TRP380
         atom = residue.getAtomByPdbName(' H  ') # hydrogen corresponding to backbone nitrogen of W380 (pdb name of H)
-        return int(atom.atom_name[1:])
+        return int(atom.index)
     
 def H378_backbone(residue):
     """Glutarimide ring of IMiDs and CELMoDs are known to make a hydrogen bond with the carbonyl
@@ -74,7 +74,7 @@ def H378_backbone(residue):
 
     if residue.resnum == 378 and residue.pdbres.strip() == 'HIS': # identified HIS378
         atom = residue.getBackboneOxygen() #getting carbonyl backbone oxygen
-        return int(atom.atom_name[1:])
+        return int(atom.index)
     
 def H378_side_chain(residue):
     """Glutarimide ring of IMiDs and CELMoDs are known to make a hydrogen bond with the hydrogen bound 
@@ -82,7 +82,7 @@ def H378_side_chain(residue):
 
     if residue.resnum == 378 and residue.pdbres.strip() == 'HIS': # identified HIS378
         atom = residue.getAtomByPdbName(' HD1')
-        return int(atom.atom_name[1:])
+        return int(atom.index)
     
 def parse_structure(input_protein_file):
     """ Given the input proteins file, parses the first structure of the protein file

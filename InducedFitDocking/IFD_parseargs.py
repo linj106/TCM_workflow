@@ -3,6 +3,11 @@ import logging
 import textwrap
 import argparse
 import subprocess
+import os
+import sys
+
+# Import IFD functionality script
+import IFD_check_input
 
 ###Initiate logger###
 logger = logging.getLogger(__name__)
@@ -54,7 +59,11 @@ def str2bool(v: str) -> bool:
         return False
     else:
         raise argparse.ArgumentTypeError(f"Invalid boolean value: {v}")
-    
+
+def full_path(path):
+    """ Given path, returns the entire file path"""
+    return os.path.join(os.getcwd(), path)
+
 def build_parser():
     """ Builds our custom parser based on argparse.ArgumentParser. Defines the specific user inputs and
     potential flags with associated help. Parser arguments are largely derived from available settings to PIPER in Schrodinger
@@ -83,9 +92,9 @@ def build_parser():
     default = parser.add_argument_group('DEFAULT SETTINGS') # arguments related to changing default IFD settings (impt for module in TCM)
 
     # adding specific arguments to our input group
-    input.add_argument('-l', '--ligands', '--ligand', type = str, dest = 'ligand', required = True, help = 'input file of ligand to dock; input must be .mae (either compressed or uncompressed)')
-    input.add_argument('-p', '--protein', '--proteins', type = str, dest = 'proteins', required = True, help = 'input file of protein poses; input must be .mae (either compressed or uncompressed)')
-    input.add_argument('--template', dest = 'template', type = str, help = 'template .inp file to use for IFD jobs')
+    input.add_argument('-l', '--ligands', '--ligand', type = full_path, dest = 'ligand', required = True, help = 'input file of ligand to dock; input must be .mae (either compressed or uncompressed)')
+    input.add_argument('-p', '--protein', '--proteins', type = full_path, dest = 'proteins', required = True, help = 'input file of protein poses; input must be .mae (either compressed or uncompressed)')
+    input.add_argument('--template', dest = 'template', type = full_path, help = 'template .inp file to use for IFD jobs')
 
     # adding specific arguments to change server/job info group
     job_control.add_argument('--NGLIDECPU', dest = 'NGLIDECPU', type = int, help = 'maximum number of Glide jobs to run simultaneously')
@@ -96,28 +105,34 @@ def build_parser():
     job_control.add_argument('--TMPLAUNCHDIR', dest = 'TMPLAUNCHDIR', type = str2bool, help = 'launches temporary directory to store the data used by system; requires bool')
     job_control.add_argument('--jobname', dest = 'jobname', type = str, help = 'custom name for job to display on BMS RHEL8 cluster')
     job_control.add_argument('-d, --debug', dest = 'DEBUG', type = str2bool, help = 'shows details of job control to help with debugging; requires bool')
+    job_control.add_argument('-o', '--output', dest = 'output', type = full_path, help = 'directory to place results and loggers in; must already exist')
     
     # adding specific arguments to add constraints
-    h_bond_constraints.add_argument('--hbond', '--constraints', nargs = '+', dest = 'h_bond_constraints', action = ParseKeyValuePairs, 
+    h_bond_constraints.add_argument('--hbond', '--constraints', nargs = '+', dest = 'h_bond_constraints', type = full_path, action = ParseKeyValuePairs, 
                                     help = """hydrogen bond restraints are represented by the atom number on CRBN and acceptor or donor (amine hydrogens are donors and carbonyl oxygens are acceptors);
                                     ex: --hbond 8479 donor 8440 acceptor 8451 donor -> means that atom 8479 amd 8451 are h-bond donors and 8440 is h-bond acceptor""")
     
     # adding specific arguments to change default settings (also for use in modules in which TCM workflow requires default json files to change settings of jobs)
-    default.add_argument('--default', dest = 'default', type = str, help = 'json file containing the default settings for IFD job')
+    default.add_argument('--default', dest = 'default', type = full_path, help = 'json file containing the default settings for IFD job')
 
     return parser
 
-def parse_args():
+
+def parse_and_check_args():
     """ Builds parser and parse user's inputs. 
     
     Returns:
     args - recognized user-parsed arugments """
 
     # building parser with defined user inputs
-    parser = build_parser()
+    parser = build_parser() 
 
-    # using parse to parse user inputs
+    # using parser to parse user inputs
     # collecting known and unknown arguments
     args, unknowns = parser.parse_known_args()
 
+    # making sure that the arguments are valid before proceeding
+    if IFD_check_input.check_parsed_args(parser ,sys.argv, args, unknowns) is True:
+        sys.exit(0) # exits because fatal error found
+    
     return args

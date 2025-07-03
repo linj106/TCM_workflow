@@ -456,10 +456,24 @@ def write_input_file_from_template(template_inp, input_file_path, binding_site, 
                 stage[0] = updated_input_file
                 logger.info(f"Updated under input file: {updated_input_file}")
             
-            # log error if there already exsits an argument after INPUT FILE
+            # log error if there already exists an argument after INPUT FILE
             else: 
                 logger.critical("IFD .inp template file cannot have existing argument after INPUT_FILE")
-            
+        
+        # adding in binding_site argument to TRIM_SIDECHAINS
+        if stage[0].lstrip().startswith("STAGE TRIM_SIDECHAINS"):
+            for i, line in enumerate(stage):
+                
+                # identifying and changing binding site 
+                if line.lstrip().startswith("BINDING_SITE"):
+
+                    if len(line.strip().split()) == 1: # making sure no arguments already exist
+                        updated_binding_site = line.rstrip("\n") + f" {binding_site}\n"
+                        stage[i] = updated_binding_site
+                        logger.info(f"Updated under trim_sidechains stage: {updated_binding_site}")
+                    else:
+                        logger.critical("IFD .inp template file cannot have existing argument after BINDING_SITE under STAGE TRIM_SIDECHAINS")
+
         # modifying Glide Docking Template
         elif stage[0].lstrip().startswith("STAGE GLIDE_DOCKING2"):  
             for i, line in enumerate(stage): 
@@ -521,22 +535,15 @@ def write_input_file_from_template(template_inp, input_file_path, binding_site, 
     return file_out_path
 
 def get_inputs(args):
-    """ From user-parsed arguments, identifies the input protein poses and ligand file to dock and returns these as full paths. Deletes these files from the args
+    """ From user-parsed arguments, identifies the input protein poses and ligand file to dock and returns these as full paths.
     
     Input: user-parsed args with .ligand, .proteins
     Returns: tuple of (full_input_protein_path, full_ligand_file_path) """
 
-    cwd = os.getcwd() # getting cwd
     protein = args.proteins
     ligand = args.ligand
 
-    # getting full path to protein file
-    protein_path = os.path.join(cwd, protein)
-
-    # getting full path to ligand file
-    ligand_path = os.path.join(cwd, ligand)
-
-    return (protein_path, ligand_path)
+    return (protein, ligand)
 
 def make_input_file_from_args(args, ifd_dir):
     """Uses arguments in args to create .inp file for IFD. Importantly, certain
@@ -572,17 +579,10 @@ def make_input_file_from_args(args, ifd_dir):
     if args.template is None: # no user parsed template
         input_file_path = write_input_file_from_scratch(input_protein_file, ligand_binding_site, input_ligand_file, h_bond_constraints, file_out_path = os.path.join(ifd_dir, file_out_name))
     else: #user parsed template
-        template_path = os.path.join(os.getcwd(), args.template)
+        template_path = args.template
         input_file_path = write_input_file_from_template(template_path, input_protein_file, ligand_binding_site, input_ligand_file, h_bond_constraints,  file_out_path = os.path.join(ifd_dir, file_out_name))
 
     # schrodinger does not allow full file paths for input_file_path, therefore must enter ifd_dir and use name of file
     input_file_name = input_file_path.split('/')[-1]
-
-    # deleting parsed arguments for input file so only cmdline schrodinger IFD-recognized args are left
-    del args.proteins
-    del args.ligand
-    del args.template
-    del args.h_bond_constraints
-    del args.jobname
 
     return args, input_file_name
