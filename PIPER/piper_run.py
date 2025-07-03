@@ -24,19 +24,31 @@ def run_job(command):
                 logger.debug(line)
 
 # building run command from params dictionary
-def build_params_command(params):
+def build_params_command(params, cmd_line = ['poses', 'rotations', 'refinement_protocol', 'raw', 'OMPI', 
+<<<<<<< Updated upstream
+                'JOBID', 'use_non_standard_residue', 'HOST', 'TMPLAUNCHDIR', 'DEBUG', 'constraints_file']):
+=======
+                'JOBID', 'use_nonstandard_residue', 'HOST', 'TMPLAUNCHDIR', 'DEBUG', 'constraints_file']):
+>>>>>>> Stashed changes
     """ Builds terminal commands from params dictionary.
 
-    Input: params dictionary  
+    Input: 
+    - params dictionary 
+    - cmd_line: list of cmds to include in this section 
     Returns: list of run command"""
 
     cmd = []
 
     # iterating over all parameters and adding to cmd in correct format
     for k,v in params.items():
+
+        # if parameter is not passed to PIPER on cmd line (or if that part will be inputted in another fxn)
+        if k not in cmd_line:
+            continue
+
         #True or False parameters convert to the format where flag is included (T) or not included
         #e.g. 'raw':True goes to -raw while 'raw':False has no flag in cmd
-        if v is True:
+        elif v is True:
             cmd.append(f'-{k}')
 
         elif v is False:
@@ -52,7 +64,7 @@ def build_params_command(params):
         #special handling for host information to add OMPI after host 
         elif isinstance(v, str):
             if k == 'HOST':
-                cmd.append(f'-{k} {v}:{params['OMPI'] if 'OMPI' in params else 10}')
+                cmd.append(f"-{k} {v}:{params['OMPI'] if 'OMPI' in params else 10}")
             else:
                 cmd.append(f'-{k} {v}')
     
@@ -71,7 +83,16 @@ def get_inputs(args):
     lig = args.ligand_prot
     lig_chain = args.ligand_chain
 
-    return [f'-receptor {rec}', f'-receptor_chain {rec_chain}', f'-ligand {lig}', f'-ligand_chain {lig_chain}']
+    # building input argument (appending receptor and ligand and chain info if not None)
+    input = []
+    input.append(f'-receptor {rec}')
+    if rec_chain is not None:
+        input.append(f'-receptor_chain {rec_chain}')
+    input.append(f'-ligand {lig}')
+    if lig_chain is not None:
+        input.append(f'-ligand_chain {lig_chain}')
+    
+    return input
 
 def piper(args, params, SCHRODINGER, piper_dir):
     """ Runs piper job.
