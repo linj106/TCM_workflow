@@ -1,0 +1,8 @@
+{
+    "NGLIDECPU": 10,
+    "NPRIMECPU": 10,
+    "NOLOCAL": true,
+    "HOST": "js-hopi-sge-xxl-rhel8",
+    "SUBHOST": "js-hopi-sge-xxl-rhel8",
+    "TMPLAUNCHDIR": true
+}

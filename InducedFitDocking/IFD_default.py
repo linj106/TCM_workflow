@@ -85,7 +85,7 @@ def get_default_IFD():
 
     return parameters
 
-def main(IFD_module_path, IFD_default_path, user_json_path = None):
+def main(IFD_module_path, IFD_default_path = '/home/linj106/TCM_workflow/institutional_parameters/IFD_default_params.json', user_json_path = None):
     """ Retrieves the correct default settings based on user inputs. 
     
     Input:
